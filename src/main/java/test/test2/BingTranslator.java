@@ -3,15 +3,17 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.yaml.snakeyaml.Yaml;
+
 
 public class BingTranslator {
 
@@ -37,10 +39,10 @@ public class BingTranslator {
     	driver.findElement(By.xpath("//*[contains(@class, 'srcTextarea')]")).sendKeys(input);
 	}
 	
-	public static void changeLanguage(WebDriver driver)
+	public static void changeLanguage(WebDriver driver, String language)
 	{
         driver.findElement(By.xpath(".//*[@id='content']/div/div[2]/div[3]/div[1]/div[1]/div[1]/div/div[1]")).click();
-        driver.findElement(By.cssSelector("div.col.translationContainer.destinationText td[value = 'nl']")).click();
+        driver.findElement(By.cssSelector("div.col.translationContainer.destinationText td[value = '" + language + "']")).click();
         //driver.findElement(By.xpath(".//*[@id='content']/div/div[2]/div[3]/div[1]/div[1]/div[1]/table/tbody/tr[13]/td[1]")).click();         
 	}
 	
@@ -58,40 +60,46 @@ public class BingTranslator {
         }
 	}
 	
-	public static void chkOutput(WebDriver driver) throws InterruptedException
+	public static void chkOutput(WebDriver driver, String result) throws InterruptedException
 	{
-		Thread.sleep(100);
+		Thread.sleep(1000);
 		WebElement outputBox = driver.findElement(By.xpath("//*[@id='destText']"));
         String textInsideOutputBox = outputBox.getText();
-        if(textInsideOutputBox.isEmpty())
+        if(!textInsideOutputBox.equals(result))
         {
            System.out.println("Output field is empty");
         }  
         else
         {
-        	System.out.println("Output field is not empty");
+        	System.out.println("Output field matches result");
         }
 	}
 	
+	@SuppressWarnings({"unused", "unchecked" })
 	public static void main(String[] args) throws FileNotFoundException, InterruptedException {
 		
 		//System.setProperty("webdriver.firefox.marionette", "C:\\GeckoDriver\\geckodriver.exe");
     	//WebDriver driver = new FirefoxDriver();
     	System.setProperty("webdriver.chrome.driver", "C:\\ChromeDriver\\chromedriver.exe");
     	WebDriver driver = new ChromeDriver();
-    	
-        /*InputStream input = new FileInputStream(new File("src/Bing.yml"));
-    	Yaml yaml = new Yaml();
-    	Object data = yaml.load(input);*/
-    
-        String url = "http://www.google.com";
-        String input = "Poppy! How are you doing?";
+	        
+		Yaml yaml = new Yaml();
+	    InputStream input1 = new FileInputStream(new File("Bing.yaml"));
+	    Map<String, Object> reader = (Map<String, Object>) yaml.load(input1);
+	    
+        String url = (String) reader.get("url");
+        String input = (String) reader.get("testData");
+        HashMap<String, String> titles = (HashMap<String, String>) reader.get("pageTitles");
+        String result = (String) reader.get("result");
+        String searchTerm = (String) reader.get("searchTerm");
+        String language = (String) reader.get("language");
         
-    	search(driver, url, "Bing Translator");
+    	search(driver, url, searchTerm);
         accessLink(driver);
         enterText(driver, input);
-        changeLanguage(driver);
+        changeLanguage(driver, language);
         chkInput(driver);
-        chkOutput(driver);
+        chkOutput(driver, result);
+        
         }
 }
